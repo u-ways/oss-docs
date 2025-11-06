@@ -50,9 +50,19 @@ To explicitly specify the source, use the `--from` flag:
 | `file`           | Read directly from a path on disk (any single file)                                                                                                           |
 | `registry`       | Pull image directly from a registry (bypass any container runtimes)                                                                                           |
 
-## Source-Specific Behaviors
 
-### Container Image Sources
+Instead of using the `--from` flag explicitly, you can instead:
+
+- provide **no hint** and let Syft **automatically detect** the source type implicitly based on the input provided
+
+- provide the source type as a **URI scheme** in the target argument (e.g., `docker:alpine:latest`, `oci-archive:/path/to/image.tar`, `dir:/path/to/dir`)
+
+
+## Source-specific behaviors
+
+With each kind of source, there are specific behaviors and defaults to be aware of.
+
+### Container image sources
 
 When working with container images, Syft applies the following defaults and behaviors:
 
@@ -73,7 +83,9 @@ If Docker isn't available, it tries Podman, then Containerd, and finally attempt
 You can override this default behavior with the `default-image-pull-source` configuration option to always prefer a specific source.
 See [Configuration](/docs/reference/syft/configuration) for more details.
 
-### Directory Sources
+If no tag is provided then it is assumed to be `latest`.
+
+### Directory sources
 
 When you provide a directory path as the source, Syft recursively scans the directory tree to catalog installed software packages and files.
 
@@ -113,7 +125,7 @@ These file types are never indexed during directory scans:
 
 Regular files, directories, and symbolic links are always processed.
 
-### Archive Sources
+### Archive sources
 
 Syft automatically detects and unpacks common archive formats, then catalogs their contents.
 If an archive is a container image archive (from `docker save` or `skopeo copy`), Syft treats it as a container image.
@@ -146,7 +158,7 @@ Standalone compression formats (extracted if containing tar):
 - `.xz`
 - `.zst` / `.zstd` (zstandard)
 
-### OCI Archives and Layout Sources
+### OCI archives and layout sources
 
 Syft automatically detects OCI archive and directory structures (including OCI layouts and SIF files) and catalogs them accordingly.
 
@@ -176,16 +188,16 @@ Container image archive from an image:
 docker save -o alpine.tar alpine:latest
 ```
 
-## Container Runtime Configuration
+## Container runtime configuration
 
-### Image Availability and Authentication
+### Image availability and authentication
 
 When using container runtime sources (Docker, Podman, or Containerd):
 
 - **Missing images**: If an image doesn't exist locally in the container runtime, Syft attempts to pull it from the registry via the runtime
 - **Private images**: You must be logged in to the registry via the container runtime (e.g., `docker login`) or have credentials configured for direct registry access. See [Authentication with Private Registries](/docs/guides/private-registries) for more details.
 
-### Environment Variables
+### Environment variables
 
 Syft respects the following environment variables for each container runtime:
 
@@ -201,7 +213,7 @@ Syft respects the following environment variables for each container runtime:
 | **Containerd** | `CONTAINERD_ADDRESS`   | Containerd socket address (overrides default `/run/containerd/containerd.sock`)                         |
 |                | `CONTAINERD_NAMESPACE` | Containerd namespace (defaults to `default`)                                                            |
 
-### Podman Daemon Requirements
+### Podman daemon requirements
 
 Unlike Docker Desktop, which typically auto-starts, Podman requires explicitly starting the service.
 
@@ -216,7 +228,7 @@ Syft attempts to connect to Podman using the following methods in order:
    - Configured via `CONTAINER_HOST`, `CONTAINER_SSHKEY`, and `CONTAINER_PASSPHRASE` environment variables
    - Used for remote Podman instances
 
-## Direct Registry Access
+## Direct registry access
 
 The `registry` source bypasses container runtimes entirely and pulls images directly from the registry.
 
